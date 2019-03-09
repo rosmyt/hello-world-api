@@ -1,0 +1,12 @@
+{
+  "name": "homework_assignement_1",
+  "version": "1.0.0",
+  "description": "Hello World API",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Rosmy Thomas",
+  "license": "ISC"
+}
