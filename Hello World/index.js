@@ -14,6 +14,14 @@ const router = {
     'hello' : hello
 };
 
+router.responseHandler = function( data, callback) {
+    if(data.handler) {
+        (data.method === 'post') ? callback(data.handler.postMessage) : callback(data.handler.defaultMessage);
+    } else {
+        callback( { message : '404 - Page Not Found'}, 404);
+    }
+}
+
 //HTTP server object
 var httpServer = http.createServer( (req, res)  => {
     var parsedUrl = url.parse(req.url, true);
@@ -30,7 +38,6 @@ var httpServer = http.createServer( (req, res)  => {
         method, 
         headers,
     };
-    recievedData.handler = (typeof(router[recievedData.path]) !== 'undefined') ? router[recievedData.path] : null;
 
     //Parsing payload    
     var decoder = new StringDecoder('utf-8');
@@ -45,19 +52,30 @@ var httpServer = http.createServer( (req, res)  => {
             recievedData.message = JSON.parse(message);
         }      
     })
+        
+    //Determining router handler
+    recievedData.handler = (typeof(router[recievedData.path]) !== 'undefined') ? router[recievedData.path] : null;
 
     //Send Response message
-    if(recievedData.handler) {
-        const resMessage = {};
-        if(recievedData.method === 'post') {
-            resMessage.message = recievedData.handler.postMessage;
-        } else {
-            resMessage.message = recievedData.handler.defaultMessage;
-        }
-        sendResponse(res, resMessage);
-    } else {
-        sendResponse(res, { message : '404 - Page Not Found'}, 404);
-    }
+    router.responseHandler(recievedData, (message, statusCode) => {
+        data = (typeof(message) == 'object') ? message : {}; 
+        statusCode = (typeof(statusCode) == 'number' ) ? statusCode : 200; 
+        res.setHeader('Content-Type', 'application/json');
+        res.writeHeader(statusCode);
+        res.end(JSON.stringify(message));
+    });
+
+    // if(recievedData.handler) {
+    //     const resMessage = {};
+    //     if(recievedData.method === 'post') {
+    //         resMessage.message = recievedData.handler.postMessage;
+    //     } else {
+    //         resMessage.message = recievedData.handler.defaultMessage;
+    //     }
+    //     sendResponse(res, resMessage);
+    // } else {
+    //     sendResponse(res, { message : '404 - Page Not Found'}, 404);
+    // }
 
 }); //httpServer()
 
@@ -65,12 +83,3 @@ var httpServer = http.createServer( (req, res)  => {
 httpServer.listen(port, () => {
     console.log(`The server is listening on port ${port} now`);
 })
-
-function sendResponse(resOject, data, statusCode) {
-    data = (typeof(data) == 'object') ? data : {}; 
-    statusCode = (typeof(statusCode) == 'number' ) ? statusCode : 200; 
-    resOject.setHeader('Content-Type', 'application/json');
-    resOject.writeHeader(statusCode);
-    resOject.end(JSON.stringify(data));
-}
-
