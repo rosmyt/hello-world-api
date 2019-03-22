@@ -1,6 +1,7 @@
 var http = require('http');
 var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
+var config = require('./config');
 
 var port = 8081;
 
@@ -64,19 +65,6 @@ var httpServer = http.createServer( (req, res)  => {
         res.writeHeader(statusCode);
         res.end(JSON.stringify(message));
     });
-
-    // if(recievedData.handler) {
-    //     const resMessage = {};
-    //     if(recievedData.method === 'post') {
-    //         resMessage.message = recievedData.handler.postMessage;
-    //     } else {
-    //         resMessage.message = recievedData.handler.defaultMessage;
-    //     }
-    //     sendResponse(res, resMessage);
-    // } else {
-    //     sendResponse(res, { message : '404 - Page Not Found'}, 404);
-    // }
-
 }); //httpServer()
 
 
