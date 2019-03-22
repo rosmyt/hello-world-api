@@ -1,12 +1,18 @@
-var http = require('http');
-var url = require('url');
-var StringDecoder = require('string_decoder').StringDecoder;
-var config = require('./config');
+const http = require('http');
+const https = require('https');
+const url = require('url');
+const fs = require('fs');
+const StringDecoder = require('string_decoder').StringDecoder;
 
-var port = 8081;
+const config = require('../config');
+
+const httpsServerOptions = {
+    'key' : fs.readFileSync(__dirname + '/https/key.pem'),
+    'cert' : fs.readFileSync(__dirname + '/https/cert.pem')
+};
 
 //Define routers
-hello = {
+const hello = {
     defaultMessage :  'Hello World' ,
     postMessage :  'Post method in hello'
 };
@@ -23,8 +29,8 @@ router.responseHandler = function( data, callback) {
     }
 }
 
-//HTTP server object
-var httpServer = http.createServer( (req, res)  => {
+
+const unifiedServer = function(req, res) {
     var parsedUrl = url.parse(req.url, true);
     var path = parsedUrl.pathname;
     var trimmedPath = path.replace( /^\/+|\/+$/g, '' );
@@ -65,9 +71,24 @@ var httpServer = http.createServer( (req, res)  => {
         res.writeHeader(statusCode);
         res.end(JSON.stringify(message));
     });
-}); //httpServer()
+}
 
+//Instatiate the HTTP Server
+const httpServer = http.createServer( (req, res) => {
+    unifiedServer(req, res);
+});
 
-httpServer.listen(port, () => {
-    console.log(`The server is listening on port ${port} now`);
-})
+//Instatiate the HTTPS Server
+const httpsServer = https.createServer(httpsServerOptions, (req, res) => {
+    unifiedServer(req, res);
+});
+
+//Start the HTTP Server
+httpServer.listen(config.httpport, () => {
+    console.log(`The HTTP server is listening... Environment: ${config.envName} , Port: ${config.httpport}`);
+});
+
+//Start the HTTPS Server
+httpsServer.listen(config.httpsport, () => {
+    console.log(`The HTTPS server is listening... Environment: ${config.envName} , Port:  ${config.httpsport}`);
+});
